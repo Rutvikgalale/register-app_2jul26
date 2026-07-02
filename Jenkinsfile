@@ -12,7 +12,7 @@ pipeline {
     }
     stage("checkout from SCM"){
       steps{
-        git branch: "main", url: "git@github.com:Rutvikgalale/register-app_2jul26"
+        git branch: "main", url: "https://github.com/Rutvikgalale/register-app_2jul26.git"
       }
     }
     stage("build application "){
