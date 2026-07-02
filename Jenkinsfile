@@ -1,0 +1,29 @@
+pipeline {
+  agent { label "jenkins-agent" }
+  tools {
+    jdk "jdk17"
+    maven "maven3"
+  }
+  stages{
+    stage("Cleanup workspace"){
+      steps{
+        CleanWs()
+      }
+    }
+    stage("checkout from SCM"){
+      steps{
+        git branch: "main", url: "git@github.com:Rutvikgalale/register-app_2jul26"
+      }
+    }
+    stage("build application "){
+      steps{
+        sh "mvn clean package"
+      }
+    }
+    stage("test application"){
+      steps{
+        sh "mvn test"
+      }
+    }
+  }
+}
