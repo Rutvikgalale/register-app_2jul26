@@ -99,6 +99,7 @@ stage("code quality analysis"){
         docker images rutvikg/register_app --format "{{.Repository}}:{{.Tag}}" | \
         grep -v ":${BUILD_NUMBER}$" | \
         xargs -r docker rmi -f
+        docker system df
         '''
       }
     }
