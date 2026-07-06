@@ -93,13 +93,23 @@ stage("code quality analysis"){
         }
       }
     }
-    stage('Cleanup Old Images') {
+    stage('Cleanup Docker') {
       steps {
         sh '''
+        echo "Removing old application images..."
         docker images rutvikg/register_app --format "{{.Repository}}:{{.Tag}}" | \
         grep -v ":${BUILD_NUMBER}$" | \
         xargs -r docker rmi -f
-        docker system df
+
+        echo "Removing stopped containers..."
+        docker container prune -f
+
+        echo "Removing unused Docker data..."
+        docker system prune -af
+
+        echo "Removing Trivy cache..."
+        rm -rf ~/.cache/trivy || true
+        sudo rm -rf /home/jenkins/.cache/trivy || true
         '''
       }
     }
