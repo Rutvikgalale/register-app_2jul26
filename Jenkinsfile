@@ -76,6 +76,11 @@ stage("code quality analysis"){
               echo $docker_pass | docker login -u $docker_user --password-stdin
               docker build -t ${image_tag} .
               docker push ${image_tag}
+              ip r l
+              whoami
+              pwd
+              id
+              docker images
               """
           }
         }
