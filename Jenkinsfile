@@ -6,8 +6,6 @@ pipeline {
   }
   environment{
     app_name="register_app"
-    image_name="${docker_user}/${app_name}"
-    image_tag="${image_name}:${BUILD_NUMBER}"
   }
   stages{
     stage("Cleanup workspace"){
@@ -72,10 +70,12 @@ stage("code quality analysis"){
       steps{
         script{
           withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
+              
+              def image_tag = "${docker_user}/${app_name}:${BUILD_NUMBER}"
               sh """
               echo $docker_pass | docker login -u $docker_user --password-stdin
-              docker build -t "${docker_user}/${image_tag}"
-              docker push "${docker_user}/${image_tag}"
+              docker build -t ${image_tag} .
+              docker push ${image_tag}
               """
           }
         }
