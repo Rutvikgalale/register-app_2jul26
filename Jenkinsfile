@@ -4,6 +4,11 @@ pipeline {
     jdk "java17"
     maven "maven3"
   }
+  environment{
+    app_name="register_app"
+    image_name="${docker_user}/${app_name}"
+    image_tag="${image_name}:${BUILD_NUMBER}"
+  }
   stages{
     stage("Cleanup workspace"){
       steps{
@@ -34,10 +39,45 @@ pipeline {
         }
       }
     }
+/*
+stage("code quality analysis"){
+        steps{
+          withSonarQubeEnv('sonar'){ // 'sonar' is the name you configured in Manage Jenkins → System
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'sonar_token')]) {
+              script{
+                def scannerHome = tool 'sonar' //// 'sonar' must match the name in  manage jenkins -> tool configuraion
+                sh """
+                ${scannerHome}/bin/sonar-scanner \
+                -Dsonar.projectKey=Register-app \
+                -Dsonar.sources=. \
+                -Dsonar.java.binaries=server/target/classes,webapp/target/webapp/WEB-INF/classes \
+                -Dsonar.host.url=http://172.31.47.102:9000 \
+                -Dsonar.login=$sonar_token
+                """
+              }
+            }
+          }
+        }
+      }
+*/
+
     stage("Quality gate"){
       steps{
         script{
           waitForQualityGate abortPipeline: false, credentialsId: "Jenkins-sonar-token"
+        }
+      }
+    }
+    stage("docker build & push"){
+      steps{
+        script{
+          withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
+              sh """
+              echo $docker_pass | docker login -u $docker_user --password-stdin
+              docker build -t "${docker_user}/${image_tag}
+              docker push "${docker_user}/${image_tag}"
+              """
+          }
         }
       }
     }
