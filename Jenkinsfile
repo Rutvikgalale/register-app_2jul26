@@ -74,7 +74,7 @@ stage("code quality analysis"){
           withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
               sh """
               echo $docker_pass | docker login -u $docker_user --password-stdin
-              docker build -t "${docker_user}/${image_tag}
+              docker build -t "${docker_user}/${image_tag}"
               docker push "${docker_user}/${image_tag}"
               """
           }
