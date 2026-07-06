@@ -93,11 +93,18 @@ stage("code quality analysis"){
         }
       }
     }
+    stage("deploy"){
+      steps{
+        sh """
+        docker rm -f ${app_name} || true
+        docker run -d --name ${app_name} -p 8080:8080 ${image_tag} 
+      }
+    }
   }
   post {
     always {
         sh '''
-        docker images "rutvikg/register_app" --format "{{.Repository}}:{{.Tag}}" |
+        docker images "${user_name}/${app_name}" --format "{{.Repository}}:{{.Tag}}" |
         grep -v ":${BUILD_NUMBER}$" |
         xargs -r docker rmi -f || true
 
