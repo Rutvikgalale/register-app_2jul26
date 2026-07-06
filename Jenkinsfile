@@ -93,5 +93,14 @@ stage("code quality analysis"){
         }
       }
     }
+    stage('Cleanup Old Images') {
+      steps {
+        sh '''
+        docker images rutvikg/register_app --format "{{.Repository}}:{{.Tag}}" | \
+        grep -v ":${BUILD_NUMBER}$" | \
+        xargs -r docker rmi -f
+        '''
+      }
+    }
   }
 }
