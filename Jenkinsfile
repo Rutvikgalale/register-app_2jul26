@@ -1,104 +1,130 @@
 pipeline {
-  agent { label "jenkins-agent" }
-  tools {
-    jdk "java17"
-    maven "maven3"
-  }
-  environment{
-    app_name="register_app"
-  }
-  stages{
-    stage("Cleanup workspace"){
-      steps{
-        cleanWs()
-      }
-    }
-    stage("checkout from SCM"){
-      steps{
-        git branch: "main", url: "https://github.com/Rutvikgalale/register-app_2jul26.git"
-      }
-    }
-    stage("build application "){
-      steps{
-        sh "mvn clean package"
-      }
-    }
-    stage("test application"){
-      steps{
-        sh "mvn test"
-      }
-    }
-    stage("Sonarqube Analysis"){
-      steps{
-        script{
-           withSonarQubeEnv(credentialsId: "jenkins-sonar-token"){
-               sh "mvn sonar:sonar"
-           }
-        }
-      }
-    }
-/*
-stage("code quality analysis"){
-        steps{
-          withSonarQubeEnv('sonar'){ // 'sonar' is the name you configured in Manage Jenkins → System
-            withCredentials([string(credentialsId: 'sonar-token', variable: 'sonar_token')]) {
-              script{
-                def scannerHome = tool 'sonar' //// 'sonar' must match the name in  manage jenkins -> tool configuraion
-                sh """
-                ${scannerHome}/bin/sonar-scanner \
-                -Dsonar.projectKey=Register-app \
-                -Dsonar.sources=. \
-                -Dsonar.java.binaries=server/target/classes,webapp/target/webapp/WEB-INF/classes \
-                -Dsonar.host.url=http://172.31.47.102:9000 \
-                -Dsonar.login=$sonar_token
-                """
-              }
-            }
-          }
-        }
-      }
-*/
+    agent { label "jenkins-agent" }
 
-    stage("Quality gate"){
-      steps{
-        script{
-          waitForQualityGate abortPipeline: false, credentialsId: "Jenkins-sonar-token"
+    tools {
+        jdk "java17"
+        maven "maven3"
+    }
+
+    environment {
+        APP_NAME = "register_app"
+        IMAGE_TAG = ""
+    }
+
+    stages {
+
+        stage("Cleanup Workspace") {
+            steps {
+                cleanWs()
+            }
         }
-      }
-    }
-    stage("docker build & push"){
-      steps{
-        script{
-          withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
-              
-              def image_tag = "${docker_user}/${app_name}:${BUILD_NUMBER}"
-              sh """
-              echo $docker_pass | docker login -u $docker_user --password-stdin
-              docker build -t ${image_tag} .
-              docker push ${image_tag}
-              ip r l
-              whoami
-              pwd
-              id
-              docker images
-              """
-          }
+
+        stage("Checkout from SCM") {
+            steps {
+                git branch: "main",
+                    url: "https://github.com/Rutvikgalale/register-app_2jul26.git"
+            }
         }
-      }
-    }
-    stage("trivy scanning"){
-      steps{
-        script{
-            sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image rutvikg/register_app:${BUILD_NUMBER} --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
+
+        stage("Build Application") {
+            steps {
+                sh "mvn clean package"
+            }
         }
-      }
+
+        stage("Run Tests") {
+            steps {
+                sh "mvn test"
+            }
+        }
+
+        stage("SonarQube Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonar') {
+                        sh "mvn sonar:sonar"
+                    }
+                }
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage("Docker Build & Push") {
+            steps {
+                script {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: "docker",
+                            usernameVariable: "DOCKER_USER",
+                            passwordVariable: "DOCKER_PASS"
+                        )
+                    ]) {
+
+                        env.IMAGE_TAG = "${DOCKER_USER}/${APP_NAME}:${BUILD_NUMBER}"
+
+                        sh """
+                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+
+                            docker build -t ${env.IMAGE_TAG} .
+
+                            docker push ${env.IMAGE_TAG}
+
+                            docker logout
+                        """
+                    }
+                }
+            }
+        }
+
+        stage("Trivy Scan") {
+            steps {
+                sh """
+                    docker run --rm \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    aquasec/trivy image \
+                    ${env.IMAGE_TAG} \
+                    --no-progress \
+                    --scanners vuln \
+                    --severity HIGH,CRITICAL \
+                    --exit-code 0 \
+                    --format table
+                """
+            }
+        }
+
+        stage("Deploy Container") {
+            steps {
+                sh """
+                    docker rm -f ${APP_NAME} || true
+
+                    docker run -d \
+                    --name ${APP_NAME} \
+                    -p 8080:8080 \
+                    ${env.IMAGE_TAG}
+                """
+            }
+        }
     }
-    stage("deploy"){
-      steps{
-        sh """
-        docker rm -f ${app_name} || true
-        docker run -d --name ${app_name} -p 8080:8080 ${image_tag} 
-      }
+
+    post {
+
+        always {
+            cleanWs()
+        }
+
+        success {
+            echo "Pipeline completed successfully."
+        }
+
+        failure {
+            echo "Pipeline failed."
+        }
     }
-  }
 }
