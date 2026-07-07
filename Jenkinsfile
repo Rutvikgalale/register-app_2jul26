@@ -6,6 +6,7 @@ pipeline {
   }
   environment{
     app_name="register-app"
+    docker_user="docker_user"
   }
   stages{
     stage("Cleanup workspace"){
