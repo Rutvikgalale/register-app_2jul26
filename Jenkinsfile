@@ -4,6 +4,8 @@ pipeline {
     jdk "java17"
     maven "maven3"
   }
+  environment{
+    app_name="register-app"
   stages{
     stage("Cleanup workspace"){
       steps{
@@ -38,6 +40,19 @@ pipeline {
       steps {
         script {
           waitForQualityGate abortPipeline: false, credentialsId: 'jenkins-sonar-token'
+        }
+      }
+    }
+    stage("docker build & push"){
+      steps{
+        script{
+          withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
+              sh """
+              echo $docker_pass | docker login -u $docker_user --password-stdin
+              docker build -t "${docker_user}/${app_name}:${BUILD_NUMBER}" .
+              docker push "${docker_user}/${app_name}:${BUILD_NUMBER}"
+              """
+          }
         }
       }
     }
