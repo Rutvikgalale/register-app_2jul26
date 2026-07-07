@@ -6,6 +6,7 @@ pipeline {
   }
   environment{
     app_name="register-app"
+  }
   stages{
     stage("Cleanup workspace"){
       steps{
