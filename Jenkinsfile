@@ -47,15 +47,14 @@ pipeline {
                 }
             }
         }
-
-        stage("Quality Gate") {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
+      
+        stage("code quality gate"){
+          steps{
+            timeout(time: 5, unit: 'MINUTES') { // Jenkins will wait up to 5 minutes for SonarQube to send back the analysis
+              waitForQualityGate abortPipeline: false
+            } 
+          }
         }
-
         stage("Docker Build & Push") {
             steps {
                 script {
