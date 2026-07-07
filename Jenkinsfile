@@ -65,4 +65,19 @@ pipeline {
       }
     }
   }
+    post {
+      always {
+        cleanWs()
+
+        sh '''
+            echo "Keeping only the latest image..."
+
+            docker images ${docker_user}/${app_name} --format "{{.Repository}}:{{.Tag}}" \
+            | grep -v ":${BUILD_NUMBER}$" \
+            | xargs -r docker rmi -f
+
+            docker image prune -f
+        '''
+      }
+    }
 }
