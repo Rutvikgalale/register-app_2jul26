@@ -101,15 +101,4 @@ stage("code quality analysis"){
       }
     }
   }
-    post {
-  always {
-    sh '''
-      docker images "${user_name}/${app_name}" --format "{{.Repository}}:{{.Tag}}" |
-      grep -v ":$BUILD_NUMBER\\$" |
-      xargs -r docker rmi -f || true
-
-      docker container prune -f || true
-    '''
-  }
-}
 }
