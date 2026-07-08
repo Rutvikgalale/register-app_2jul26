@@ -11,7 +11,11 @@ pipeline {
   stages{
     stage("Cleanup workspace"){
       steps{
-        cleanWs()
+        cleanWs(
+           deleteDirs: true,
+           disableDeferredWipeout: true,
+           notFailBuild: true
+        )
       }
     }
     stage("checkout from SCM"){
