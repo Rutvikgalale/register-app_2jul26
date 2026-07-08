@@ -71,6 +71,11 @@ pipeline {
         cleanWs()
 
         sh '''
+            # Remove Trivy cache
+            rm -rf /root/.cache/trivy || true
+            # Remove Trivy cache
+            rm -rf /root/.cache/trivy || true
+            
             echo "Keeping only the latest image..."
 
             docker images ${docker_user}/${app_name} --format "{{.Repository}}:{{.Tag}}" \
