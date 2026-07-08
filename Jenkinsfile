@@ -68,11 +68,11 @@ pipeline {
         script{
           sh '''
              # Remove Trivy cache
-            [ ! -d "$WORKSPACE/.trivy-cache" ] && mkdir -p "$WORKSPACE/.trivy-cache"
-            chmod -R 755 $WORKSPACE/.trivy-cache
+             [ ! -d "$WORKSPACE/.trivy-cache" ] && mkdir -p "$WORKSPACE/.trivy-cache"
+             chmod -R 755 $WORKSPACE/.trivy-cache
           '''
           sh """
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v -v /tmp/trivy-cache:/root/.cache/trivy aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table
+                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/trivy-cache:/root/.cache/trivy aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table
           """
         }
       }
