@@ -49,12 +49,12 @@ pipeline {
       steps{
         script{
           withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
-              sh """
+              sh '''
               docker rmi -f $(docker images -aq)
               echo $docker_pass | docker login -u $docker_user --password-stdin
               docker build -t "${docker_user}/${app_name}:${BUILD_NUMBER}" .
               docker push "${docker_user}/${app_name}:${BUILD_NUMBER}"
-              """
+              '''
           }
         }
       }
