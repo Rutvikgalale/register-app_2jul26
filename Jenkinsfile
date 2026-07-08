@@ -62,6 +62,13 @@ pipeline {
     stage("trivy scanning"){
       steps{
         script{
+          sh '''
+             # Remove Trivy cache
+            mv /root/.cache/trivy /home/ubuntu
+            rm -rf /home/ubuntu/trivy || true
+            # Remove Trivy cache
+            rm -rf /home/ubuntu/trivy || true
+          '''
           sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
         }
       }
