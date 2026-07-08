@@ -64,27 +64,24 @@ pipeline {
         script{
           sh '''
              # Remove Trivy cache
-            mv /root/.cache/trivy /home/ubuntu
-            rm -rf /home/ubuntu/trivy || true
-            # Remove Trivy cache
-            rm -rf /home/ubuntu/trivy || true
+            mkdir -p $WORKSPACE/.trivy-cache                
+            chmod -R 755 $WORKSPACE/.trivy-cache
           '''
-          sh ('docker run -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln  --exit-code 0 --severity HIGH,CRITICAL --format table')
+          sh """
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v \$WORKSPACE/.trivy-cache:/root/.cache/trivy aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table
+          """
         }
       }
     }
   }
+}
     post {
       always {
         cleanWs()
 
         sh '''
             # Remove Trivy cache
-            mv /root/.cache/trivy /home/ubuntu
-            rm -rf /home/ubuntu/trivy || true
-            # Remove Trivy cache
-            rm -rf /home/ubuntu/trivy || true
-            
+            rm -rf $WORKSPACE/.trivy-cache || true
             echo "Keeping only the latest image..."
 
             docker images ${docker_user}/${app_name} --format "{{.Repository}}:{{.Tag}}" \
