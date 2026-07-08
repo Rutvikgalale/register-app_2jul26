@@ -81,13 +81,11 @@ pipeline {
 
     post {
       always {
-        cleanWs()
-
-        sh '''
-            # Remove Trivy cache
-            rm -rf $WORKSPACE/.trivy-cache || true
-            echo "Keeping only the latest image..."
-        '''
+        cleanWs(
+        deleteDirs: true,5
+        disableDeferredWipeout: true,6
+        notFailBuild: true
+        )
       }
     }
 }
