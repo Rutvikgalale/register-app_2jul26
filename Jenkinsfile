@@ -72,7 +72,7 @@ pipeline {
             chmod -R 755 $WORKSPACE/.trivy-cache
           '''
           sh """
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v \$WORKSPACE/.trivy-cache:/root/.cache/trivy aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v -v /tmp/trivy-cache:/root/.cache/trivy aquasec/trivy image rutvikg/register-app:${BUILD_NUMBER} --no-progress --scanners vuln --exit-code 0 --severity HIGH,CRITICAL --format table
           """
         }
       }
