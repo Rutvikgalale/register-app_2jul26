@@ -50,6 +50,7 @@ pipeline {
         script{
           withCredentials([usernamePassword(credentialsId: "docker", usernameVariable: "docker_user", passwordVariable: "docker_pass")]){
               sh """
+              docker image prune -f
               echo $docker_pass | docker login -u $docker_user --password-stdin
               docker build -t "${docker_user}/${app_name}:${BUILD_NUMBER}" .
               docker push "${docker_user}/${app_name}:${BUILD_NUMBER}"
@@ -72,9 +73,10 @@ pipeline {
 
         sh '''
             # Remove Trivy cache
-            rm -rf /root/.cache/trivy || true
+            mv /root/.cache/trivy /home/ubuntu
+            rm -rf /home/ubuntu/trivy || true
             # Remove Trivy cache
-            rm -rf /root/.cache/trivy || true
+            rm -rf /home/ubuntu/trivy || true
             
             echo "Keeping only the latest image..."
 
